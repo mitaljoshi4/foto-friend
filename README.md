@@ -5,4 +5,6 @@
 
 ## Todos
 
-[] Create firebase project with simple realtime db 
+✅ Create git repo 
+
+✳️ Create firebase project with simple realtime db 
