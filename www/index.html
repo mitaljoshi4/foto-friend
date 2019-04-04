@@ -48,15 +48,25 @@
 </head>
 
 <body>
-    <!-- Start of first page -->
+    <!-- Start of Signup page -->
     <div data-role="page" id="signUpPage">
-
-        <!-- /header -->
         <div role="main" class="ui-content">
             <div class="centralize">
                 <h4> Welcome to FOTO FRIEND</h4>
                 <input type="text" placeholder="Your unique username" id="userNameInput" />
                 <a class="text-center" id="signUpButton">SIGN UP</a>
+            </div>
+        </div>
+    </div>
+    <!-- End of signup page -->
+
+    <!-- Start of User List page -->
+    <div data-role="page" id="activeUserListPage">
+
+        <!-- /header -->
+        <div role="main" class="ui-content">
+            <div class="centralize">
+                <ul data-role="none" id="activeUserListContainer"></ul>
             </div>
         </div>
         <!-- /content -->

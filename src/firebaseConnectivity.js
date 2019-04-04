@@ -27,7 +27,7 @@ let firebaseConnection = {
                 let packageId = utils.appSettings.appId.replace(new RegExp('[' + '.' + ']', 'g'), '-');
                 console.log('isUserExist : ', firebaseDatabase.ref('/' + packageId + '/' + (data.userName ? data.userName : localStorage.userName)));
                 firebaseDatabase.ref('/' + packageId + '/' + (data.userName ? data.userName : localStorage.userName)).set({ status: data.status });
-                firebaseConnection.getUserStatus((userStatus) => {
+                firebaseConnection.getUserStatus(data,  (userStatus) => {
                     if (userStatus) {
                         utils.userStatus = userStatus;
                     } else {
@@ -48,40 +48,40 @@ let firebaseConnection = {
             console.log("Error in firebase database updation : " + e);
         }
     },
-    getUserStatus: (mainCallback) => {
+    getUserStatus: (userData, mainCallback) => {
         try {
             let getStatus = (callback) => {
                 let data;
                 let packageId = utils.appSettings.appId.replace(new RegExp('[' + '.' + ']', 'g'), '-');
                 let refURL = '/' + packageId + '/';
                 let firebaseDatabase = utils.firebaseApp.database();
-                firebaseDatabase.ref(refURL + localStorage.userName).once("value", (s) => {
-                    data = s.val();
-                    callback(data.status);
+                firebaseDatabase.ref(refURL + userData.userName).once("value", (s) => {
+                    if (s.exists() == true) {
+                        data = s.val();
+                        callback(data.status);
+                    } else {
+                        callback(null);
+                    }
                 });
             }
             if (utils.firebaseApp) {
-                getStatus((points) => {
-                    mainCallback(points);
+                getStatus((status) => {
+                    mainCallback(status);
                 });
             } else {
                 firebaseConnection.init((isDone) => {
                     if (isDone) {
-                        getStatus((points) => {
-                            mainCallback(points);
+                        getStatus((status) => {
+                            mainCallback(status);
                         });
                     } else {
-                        mainCallback(points);
+                        mainCallback(status);
                     }
                 });
             }
         } catch (e) {
             console.log("Error in firebase database read : " + e);
-            if (listItemData) {
-                mainCallback(0);
-            } else {
-                mainCallback(null);
-            }
+            mainCallback(null);
         }
     }
 }
