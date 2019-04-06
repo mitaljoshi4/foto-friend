@@ -5,20 +5,24 @@ let signup = {
         console.log('Signup page created.');
         firebaseConnection.init((data) => {
             console.log("connection : ", data);
+            if (localStorage.userName) {
+                $.mobile.changePage("#activeUserListPage");
+            }
         });
         $(`#signUpButton`).click(() => {
             let username = $(`#userNameInput`).val();
             let userObj = {
                 userName: username,
-                status: true
+                status: 'online',
+                connectedWith: ''
             }
             firebaseConnection.getUserStatus(userObj, (status) => {
                 console.log('User Status : ', status);
                 if (status == null) {
                     firebaseConnection.updateUserStatus(userObj, (status) => {
-                        if (status == true) {
+                        if (status == "online") {
                             localStorage.userName = username;
-                            $.mobile.change
+                            $.mobile.changePage('#activeUserListPage');
                             //TODO : User is added, Open Online User list to request
                         } else {
                             //TODO: GO to SignUp

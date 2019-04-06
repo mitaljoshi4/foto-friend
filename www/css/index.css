@@ -8,3 +8,17 @@
 .text-center {
   text-align: center;
 }
+.user-image {
+  height: 50px;
+  border-radius: 50%;
+}
+.small-icon {
+  height: 30px;
+}
+
+#activeUserListContainer .row {
+  display: inline-flex;
+}
+.full-width {
+  width: 100%;
+}
