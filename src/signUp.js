@@ -21,11 +21,11 @@ let signup = {
                 if (status == null) {
                     firebaseConnection.updateUserStatus(userObj, (status) => {
                         if (status == "online") {
+                            //User is added, Open Online User list to request
                             localStorage.userName = username;
                             $.mobile.changePage('#activeUserListPage');
-                            //TODO : User is added, Open Online User list to request
                         } else {
-                            //TODO: GO to SignUp
+                            //GO to SignUp
                             localStorage.removeItem('userName');
                             alert('Connection Lost, Try again Later..');
                             // $("#signUpButton").val('');

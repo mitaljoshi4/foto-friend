@@ -1,5 +1,5 @@
 import { utils } from './util';
-//TODO:https://firebase.google.com/docs/database/web/lists-of-data
+//eventRef:https://firebase.google.com/docs/database/web/lists-of-data
 let firebaseConnection = {
     init: (callback) => {
         if (firebase) {
@@ -13,6 +13,7 @@ let firebaseConnection = {
                 utils.firebaseApp = firebase.initializeApp(config);
                 utils.isFirebase = true;
             }
+            firebaseConnection.bindDatabaseEvents();
             callback(true);
             console.log("Firebase configured : App Name : ", utils.firebaseApp.name);
         } else {
@@ -77,43 +78,40 @@ let firebaseConnection = {
             mainCallback(null);
         }
     },
-    getActiveUsers: (callback) => {
-        try {
-            // let packageId = utils.appSettings.appId.replace(new RegExp('[' + '.' + ']', 'g'), '-');
-            let refURL = '/users/';
-            firebaseConnection.getDatabaseOf(refURL, (s) => {
-                if (s.exists() == true) {
-                    let userData = s.val();
-                    let activeList = [];
-                    s.forEach(function (n) {
-                        let status = n.val().status;
-                        if (status == "online") {
-                            activeList.push(n.key);
-                        }
-                    });
-                    callback(activeList);
-                } else {
-                    callback([]);
-                }
-            }, (err) => {
-                callback([]);
-            })
-        } catch (e) {
-            callback([]);
-        }
+    bindDatabaseEvents: () => {
+        firebaseConnection.bindUsersEvents();
+        firebaseConnection.bindImagesEvents();
+        firebaseConnection.bindRequestsEvents();
     },
-    bindChildEvents: () => {
-        var commentsRef = firebase.database();
+    bindImagesEvents: () => {
+        let refValue = '/images';
+        var commentsRef = firebase.database().ref(refValue);
+        firebaseConnection.bindChildEvents(commentsRef, refValue);
+    },
+    bindUsersEvents: () => {
+        let refValue = '/users';
+        var commentsRef = firebase.database().ref(refValue);
+        firebaseConnection.bindChildEvents(commentsRef, refValue);
+    },
+    bindRequestsEvents: () => {
+        let refValue = '/requests';
+        var commentsRef = firebase.database().ref(refValue);
+        firebaseConnection.bindChildEvents(commentsRef, refValue);
+    },
+    bindChildEvents: (commentsRef, refValue) => {
         commentsRef.on('child_added', function (data) {
-            console.log(postElement, data.key, data.val().text, data.val().author);
+            console.log('child_added of : ', data.key);
+            utils.updateList('child_added', data, refValue);
         });
 
         commentsRef.on('child_changed', function (data) {
-            console.log(postElement, data.key, data.val().text, data.val().author);
+            console.log('child_changed of : ', data.key);
+            utils.updateList('child_changed', data, refValue);
         });
 
         commentsRef.on('child_removed', function (data) {
-            console.log(postElement, data.key);
+            console.log('child_removed of : ', data.key);
+            utils.updateList('child_removed', data, refValue);
         });
     },
     getDatabaseOf: (url, scallback, ecallback) => {
@@ -126,12 +124,6 @@ let firebaseConnection = {
         } catch (e) {
             ecallback(e);
         }
-    },
-    getRequestList: () => {
-
-    },
-    getImageList: () => {
-
     }
 }
 export { firebaseConnection };

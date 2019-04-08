@@ -29,7 +29,7 @@
             * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
                 * Enable inline JS: add 'unsafe-inline' to default-src
         -->
-       <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="telephone=no">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="viewport"
         content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
@@ -66,13 +66,44 @@
     <!-- Start of User List page -->
     <div data-role="page" id="activeUserListPage">
         <div data-role="header" data-position="fixed">
-            <h3>Find your Foto-Friend</h3>
+            <h3>Foto-Friend</h3>
         </div><!-- /header -->
         <!-- /header -->
-        <div role="main" class="ui-content">
-            <div>
-                <ul class="list-unstyled" id="activeUserListContainer"></ul>
+        <div role="main">
+            <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="active-users-tab" data-toggle="tab" href="#active-user-container"
+                        role="tab" aria-controls="home" aria-selected="true">Active</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="requests-tab" data-toggle="tab" href="#requests-container" role="tab"
+                        aria-controls="profile" aria-selected="false">Requests</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="images-tab" data-toggle="tab" href="#images-container" role="tab"
+                        aria-controls="messages" aria-selected="false">Images</a>
+                </li>
+            </ul>
+
+            <div class="tab-content ui-content">
+                <div class="tab-pane active" id="active-user-container" role="tabpanel"
+                    aria-labelledby="active-users-tab">
+                    <div>
+                        <ul class="list-unstyled" id="activeUserListContainer"></ul>
+                    </div>
+                </div>
+                <div class="tab-pane" id="requests-container" role="tabpanel" aria-labelledby="requests-tab">
+                    <div>
+                        <ul class="list-unstyled" id="requestsListContainer"></ul>
+                    </div>
+                </div>
+                <div class="tab-pane" id="images-container" role="tabpanel" aria-labelledby="images-tab">
+                    <div>
+                        <ul class="list-unstyled" id="imagesListContainer"></ul>
+                    </div>
+                </div>
             </div>
+
         </div>
         <!-- /content -->
 

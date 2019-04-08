@@ -16,7 +16,8 @@
   height: 30px;
 }
 
-#activeUserListContainer .row {
+#activeUserListContainer .row,
+#requestsListContainer .row {
   display: inline-flex;
 }
 .full-width {
