@@ -23,3 +23,12 @@
 .full-width {
   width: 100%;
 }
+#captureButton {
+  padding: 10px;
+  display: inline-block;
+  background-color: dimgrey;
+  color: white;
+  text-shadow: none;
+  margin: 10px;
+  box-shadow: 5px 5px 5px 3px lightgrey;
+}

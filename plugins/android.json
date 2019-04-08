@@ -9,6 +9,9 @@
   "installed_plugins": {
     "cordova-plugin-whitelist": {
       "PACKAGE_NAME": "com.foto.friend"
+    },
+    "cordova-plugin-camera-preview": {
+      "PACKAGE_NAME": "com.foto.friend"
     }
   },
   "dependent_plugins": {}

@@ -32,6 +32,7 @@ let utils = {
                 let listData = utils.getPendingRequestsList(reqList);
                 if (listData != '') {
                     $("#requestsListContainer").html(listData);
+                    utils.bindAcceptClickEvent();
                 } else {
                     $("#requestsListContainer").html("<h4 class='text-center'>No requests found.</h4>");
                 }
@@ -63,6 +64,16 @@ let utils = {
         });
         return reqListTemplate;
     },
+    bindAcceptClickEvent: () => {
+        let acceptBtnList = $("#requestsListContainer").find('.acceptImage');
+        $.each(acceptBtnList, (i, val) => {
+            $(val).click(function () {
+                let reqdata = val.dataset.detail;
+                utils.startCamera();
+                console.log("request-Data : ", reqdata);
+            });
+        });
+    },
     getRequestListTemplate: (i, reqData) => {
         let template = `<li class="media border-bottom border-success">` +
             `<div class="row full-width">` +
@@ -74,7 +85,7 @@ let utils = {
             reqData.sender +
             `</b></h5>` +
             `</div>` +
-            `<div class="col col-2 m-auto">` +
+            `<div class="col col-2 m-auto acceptImage" data-detail=` + JSON.stringify(reqData) + `>` +
             `<img src="./img/accept.png" class="small-icon rounded-circle">` +
             `</div>` +
             `<div class="col col-2 m-auto">` +
@@ -119,6 +130,12 @@ let utils = {
             case '/requests':
                 {
                     // TODO: Update requests list
+                    if (data.val().status == 'accepted' && eventType == 'child_changed') {
+                        if (data.val().sender == localStorage.userName || data.val().receiver == localStorage.userName) {
+                            //TODO: Update status and start camera
+                            utils.startCamera();
+                        }
+                    }
                     console.log('Requests Update : ', eventType, data);
                     break;
                 }
@@ -186,6 +203,46 @@ let utils = {
             })
         } catch (e) {
             callback([]);
+        }
+    },
+    startCamera: () => {
+        try {
+            $.mobile.changePage('#captureImagePage');
+            let options = {
+                x: 0,
+                y: 0,
+                width: window.screen.width,
+                height: window.screen.height - 100,
+                camera: CameraPreview.CAMERA_DIRECTION.BACK,
+                toBack: false,
+                tapPhoto: false,
+                tapFocus: true,
+                previewDrag: true,
+                storeToFile: true,
+                disableExifHeaderStripping: false
+            };
+            CameraPreview.startCamera(options);
+        } catch (e) {
+            console.log("Error in camera plugin.....");
+        }
+    },
+    captureImage: () => {
+        try {
+            CameraPreview.takePicture(function (base64PictureData) {
+                /* code here */
+                console.log(base64PictureData);
+                utils.stopCamera();
+                //TODO : send image to database
+            });
+        } catch (e) {
+            console.log("Error in capture image.....");
+        }
+    },
+    stopCamera: () => {
+        try {
+            CameraPreview.stopCamera();
+        } catch (e) {
+            console.log("Error in capture image.....");
         }
     }
 }
