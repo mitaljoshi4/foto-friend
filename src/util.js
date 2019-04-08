@@ -14,6 +14,37 @@ let utils = {
     setUserData: (userData, callback) => {
         firebaseConnection.updateUserStatus(userData, callback);
     },
+    setActiveUserList: () => {
+        utils.getActiveUsers((userList) => {
+            if (userList.length != 0) {
+                let listData = utils.getActiveUserList(userList);
+                $("#activeUserListContainer").html(listData);
+                // $("#activeUserListContainer").listview('refresh');
+            } else {
+                $("#activeUserListContainer").html("<h4 class='text-center'>No active user found.</h4>");
+                // $("#activeUserListContainer").listview('refresh');
+            }
+        });
+    },
+    setRequestsList: () => {
+        utils.getPendingRequests((reqList) => {
+            if (reqList.length != 0) {
+                let listData = utils.getPendingRequestsList(reqList);
+                if (listData != '') {
+                    $("#requestsListContainer").html(listData);
+                } else {
+                    $("#requestsListContainer").html("<h4 class='text-center'>No requests found.</h4>");
+                }
+                // $("#activeUserListContainer").listview('refresh');
+            } else {
+                $("#requestsListContainer").html("<h4 class='text-center'>No requests found.</h4>");
+                // $("#activeUserListContainer").listview('refresh');
+            }
+        });
+    },
+    setImagesList: () => {
+
+    },
     getActiveUserList: (userList) => {
         let userListTemplate = '';
         $.each(userList, (i, user) => {
@@ -23,22 +54,49 @@ let utils = {
         });
         return userListTemplate;
     },
-    getUserListTemplate: (i, userData) => {
+    getPendingRequestsList: (reqList) => {
+        let reqListTemplate = '';
+        $.each(reqList, (i, request) => {
+            if (request.receiver == localStorage.userName) {
+                reqListTemplate += utils.getRequestListTemplate(i, request);
+            }
+        });
+        return reqListTemplate;
+    },
+    getRequestListTemplate: (i, reqData) => {
         let template = `<li class="media border-bottom border-success">` +
             `<div class="row full-width">` +
             `<div class="col col-3 m-auto">` +
             `<img src="./img/user.png" class="user-image rounded-circle">` +
             `</div>` +
             `<div class="col col-5 m-auto">` +
-            `<h5>` +
-            userData +
-            `</h5>` +
+            `<h5><b>` +
+            reqData.sender +
+            `</b></h5>` +
             `</div>` +
             `<div class="col col-2 m-auto">` +
             `<img src="./img/accept.png" class="small-icon rounded-circle">` +
             `</div>` +
             `<div class="col col-2 m-auto">` +
             `<img src="./img/reject.png" class="small-icon rounded-circle">` +
+            `</div>` +
+            `</div>` +
+            `</li>`;
+        return template;
+    },
+    getUserListTemplate: (i, userData) => {
+        let template = `<li class="media border-bottom border-success">` +
+            `<div class="row full-width">` +
+            `<div class="col col-3 m-auto">` +
+            `<img src="./img/user.png" class="user-image rounded-circle">` +
+            `</div>` +
+            `<div class="col col-6 m-auto">` +
+            `<h5>` +
+            userData +
+            `</h5>` +
+            `</div>` +
+            `<div class="col col-3 m-auto">` +
+            `<img src="./img/add-user.png" class="small-icon rounded-circle">` +
             `</div>` +
             `</div>` +
             `</li>`;
@@ -96,7 +154,7 @@ let utils = {
             callback([]);
         }
     },
-    getRequestList: (callback) => {
+    getPendingRequests: (callback) => {
         try {
             let refURL = '/requests/';
             firebaseConnection.getDatabaseOf(refURL, (s) => {
@@ -113,7 +171,7 @@ let utils = {
             callback([]);
         }
     },
-    getImageList: (callback) => {
+    getImages: (callback) => {
         try {
             let refURL = '/images/';
             firebaseConnection.getDatabaseOf(refURL, (s) => {
