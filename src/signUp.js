@@ -5,6 +5,7 @@ let signup = {
         console.log('Signup page created.');
         firebaseConnection.init((data) => {
             console.log("connection : ", data);
+            localStorage.isReceiver = false;
             if (localStorage.userName) {
                 $.mobile.changePage("#activeUserListPage");
             }

@@ -58,7 +58,7 @@ let utils = {
     getPendingRequestsList: (reqList) => {
         let reqListTemplate = '';
         $.each(reqList, (i, request) => {
-            if (request.receiver == localStorage.userName) {
+            if (request.status == 'pending') {
                 reqListTemplate += utils.getRequestListTemplate(i, request);
             }
         });
@@ -68,7 +68,10 @@ let utils = {
         let acceptBtnList = $("#requestsListContainer").find('.acceptImage');
         $.each(acceptBtnList, (i, val) => {
             $(val).click(function () {
-                let reqdata = val.dataset.detail;
+                let reqdata = JSON.parse(val.dataset.detail);
+                localStorage.connectedWith = reqdata.sender;
+                localStorage.isReceiver = true;
+                utils.updateRequestStatus('accepted');
                 utils.startCamera();
                 console.log("request-Data : ", reqdata);
             });
@@ -113,28 +116,60 @@ let utils = {
             `</li>`;
         return template;
     },
+    updateListImage: (eventType, data, refVal) => {
+
+    },
     updateList: (eventType, data, refVal) => {
         switch (refVal) {
-            case '/images':
+            case 'image':
                 {
-                    //TODO : Update Image
-                    console.log('Image Update : ', eventType, data);
+                    // console.log('image from : ', data.ref.getParent().path.toString());
+                    //TODO : Update Images
+                    if (data.val() != '') {
+                        let path = data.ref.getParent().path.toString();
+                        let isMyImage = path.includes('/' + localStorage.userName + '/');
+                        if (isMyImage) {
+                            localStorage.myImage = data.val();
+                            if (localStorage.otherImage) {
+                                utils.setImageToCanvas(localStorage.myImage, localStorage.otherImage);
+                            }
+                        } else {
+                            localStorage.otherImage = data.val();
+                            if (localStorage.myImage) {
+                                utils.setImageToCanvas(localStorage.myImage, localStorage.otherImage);
+                            }
+                        }
+                        // console.log('Image Update : ', eventType, data);
+                        // localStorage.myImage = data.val();
+                        // firebaseConnection.getDatabaseOf(localStorage.connectedWith + '/image/', (resdata) => {
+                        //     utils.setImageToCanvas(data.val(), resdata.val().image);
+                        // });
+                    }
                     break;
                 }
-            case '/users':
+            case 'connectUser':
                 {
                     //TODO : Update active user list
+
                     console.log('Users Update : ', eventType, data);
+                    firebaseConnection.bindUserDatabaseEvents(data.val());
                     break;
                 }
-            case '/requests':
+            case 'sent':
                 {
                     // TODO: Update requests list
-                    if (data.val().status == 'accepted' && eventType == 'child_changed') {
-                        if (data.val().sender == localStorage.userName || data.val().receiver == localStorage.userName) {
+                    if (data.val().status == 'accepted') {
+                        if (localStorage.isReceiver == "true" && data.val().sender == localStorage.connectedWith) {
                             //TODO: Update status and start camera
                             utils.startCamera();
+                        } else if (localStorage.isReceiver == "false" && data.val().receiver == localStorage.connectedWith) {
+                            utils.startCamera();
+                        } else {
                         }
+                    } else if (data.val().status == 'capturing') {
+                        setTimeout(() => {
+                            utils.captureImage();
+                        }, 2000)
                     }
                     console.log('Requests Update : ', eventType, data);
                     break;
@@ -149,13 +184,13 @@ let utils = {
     getActiveUsers: (callback) => {
         try {
             // let packageId = utils.appSettings.appId.replace(new RegExp('[' + '.' + ']', 'g'), '-');
-            let refURL = '/users/';
+            let refURL = '';
             firebaseConnection.getDatabaseOf(refURL, (s) => {
                 if (s.exists() == true) {
                     let userData = s.val();
                     let activeList = [];
                     s.forEach(function (n) {
-                        let status = n.val().status;
+                        let status = n.val().userStatus;
                         if (status == "online") {
                             activeList.push(n.key);
                         }
@@ -173,11 +208,11 @@ let utils = {
     },
     getPendingRequests: (callback) => {
         try {
-            let refURL = '/requests/';
+            let refURL = localStorage.userName + '/request/received';
             firebaseConnection.getDatabaseOf(refURL, (s) => {
                 if (s.exists() == true) {
                     let requests = s.val();
-                    callback(requests);
+                    callback([requests]);
                 } else {
                     callback([]);
                 }
@@ -190,7 +225,7 @@ let utils = {
     },
     getImages: (callback) => {
         try {
-            let refURL = '/images/';
+            let refURL = localStorage.userName + '/image';
             firebaseConnection.getDatabaseOf(refURL, (s) => {
                 if (s.exists() == true) {
                     let images = s.val();
@@ -212,12 +247,12 @@ let utils = {
                 x: 0,
                 y: 0,
                 width: window.screen.width,
-                height: window.screen.height - 100,
+                height: window.screen.height - 300,
                 camera: CameraPreview.CAMERA_DIRECTION.BACK,
                 toBack: false,
                 tapPhoto: false,
                 tapFocus: true,
-                previewDrag: true,
+                previewDrag: false,
                 storeToFile: true,
                 disableExifHeaderStripping: false
             };
@@ -228,11 +263,16 @@ let utils = {
     },
     captureImage: () => {
         try {
+            $.mobile.loading('show');
             CameraPreview.takePicture(function (base64PictureData) {
                 /* code here */
-                console.log(base64PictureData);
-                utils.stopCamera();
+                let sendRefURL = localStorage.userName + '/image/';
+                // recRefURL = localStorage.connectedWith
+                utils.setReqStatus(sendRefURL, { image: 'data:image/png;base64,' + base64PictureData[0] });
                 //TODO : send image to database
+
+                // $("#capturedImage").prop('src', 'data:image/png;base64,' + base64PictureData[0]);
+                utils.stopCamera();
             });
         } catch (e) {
             console.log("Error in capture image.....");
@@ -240,10 +280,88 @@ let utils = {
     },
     stopCamera: () => {
         try {
+            localStorage.isReceiver = false;
             CameraPreview.stopCamera();
         } catch (e) {
             console.log("Error in capture image.....");
         }
+    },
+    setImageToCanvas: (img1, img2) => {
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //First canvas data
+        var img1 = loadImage(img1, main);
+        //Second canvas data
+        var img2 = loadImage(img2, main);
+
+        var imagesLoaded = 0;
+
+        function main() {
+            imagesLoaded += 1;
+
+            if (imagesLoaded == 2) {
+                // composite now
+                ctx.drawImage(img1, 0, 0, 100, 100);
+
+                ctx.globalAlpha = 0.5;
+                ctx.drawImage(img2, 100, 0, 100, 100);
+            }
+        }
+
+        function loadImage(src, onload) {
+            var img = new Image();
+
+            img.onload = onload;
+            img.src = src;
+            $.mobile.loading('hide');
+            return img;
+        }
+    },
+    updateRequestStatus: (reqStatus) => {
+
+        if (localStorage.isReceiver != "false") {
+            let refUrl = localStorage.userName + '/request/received/';
+            let firebaseDatabase = utils.firebaseApp.database();
+            firebaseDatabase.ref(refUrl).once("value", (s) => {
+                let requestArray = s.val();
+                requestArray.status = reqStatus;
+                utils.setReqStatus(refUrl, requestArray);
+                var sentUrl = localStorage.connectedWith + '/request/sent/'
+                firebaseDatabase.ref(sentUrl).once("value", (sap) => {
+                    let reqArray = sap.val();
+                    reqArray.status = reqStatus;
+                    utils.setReqStatus(sentUrl, reqArray);
+                });
+                firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
+            });
+        } else {
+            let refUrl = localStorage.userName + '/request/sent/';
+            let firebaseDatabase = utils.firebaseApp.database();
+            firebaseDatabase.ref(refUrl).once("value", (s) => {
+                let requestArray = s.val();
+                requestArray.status = reqStatus;
+                utils.setReqStatus(refUrl, requestArray);
+                var sentUrl = localStorage.connectedWith + '/request/received/'
+                firebaseDatabase.ref(sentUrl).once("value", (sap) => {
+                    let reqArray = sap.val();
+                    reqArray.status = reqStatus;
+                    utils.setReqStatus(sentUrl, reqArray);
+                });
+                firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
+            });
+        }
+
+
+    },
+    addNewToDatabase: (ref) => {
+        //TODO ref : https://firebase.google.com/docs/database/web/read-and-write
+        var newPostKey = firebase.database().ref(ref).push().key;
+        return newPostKey;
+    },
+    setReqStatus: (refUrl, newData) => {
+        let firebaseDatabase = utils.firebaseApp.database();
+        firebaseDatabase.ref(refUrl).set(newData);
     }
 }
 

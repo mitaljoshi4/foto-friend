@@ -13,9 +13,13 @@ let firebaseConnection = {
                 utils.firebaseApp = firebase.initializeApp(config);
                 utils.isFirebase = true;
             }
-            firebaseConnection.bindDatabaseEvents();
+            if (localStorage.userName) {
+                firebaseConnection.bindUserDatabaseEvents(localStorage.userName);
+            } else {
+                localStorage.clear();
+                $.mobile.changePage('#signUpPage');
+            }
             callback(true);
-            console.log("Firebase configured : App Name : ", utils.firebaseApp.name);
         } else {
             console.log("Failed to load firebase script : ");
             utils.isFirebase = false;
@@ -26,12 +30,21 @@ let firebaseConnection = {
         try {
             let getDB = () => {
                 let firebaseDatabase = utils.firebaseApp.database();
-                firebaseDatabase.ref('/users/' + (data.userName ? data.userName : localStorage.userName)).set({ status: data.status, connectedWith: data.connectedWith });
+                let defaultData = {
+                    "userStatus": data.status,
+                    "connectedWith": data.connectedWith,
+                    "image": {},
+                    "request": {
+                        "sent": {},
+                        "received": {}
+                    }
+                }
+                firebaseDatabase.ref(localStorage.userName).set(defaultData);
                 firebaseConnection.getUserStatus(data, (userStatus) => {
                     if (userStatus) {
                         utils.userStatus = userStatus;
                     } else {
-                        utils.userStatus = false;
+                        utils.userStatus = 'offline';
                     }
                     console.log("Current User Status : ", utils.userStatus);
                     callback(utils.userStatus);
@@ -52,7 +65,7 @@ let firebaseConnection = {
         try {
             let getStatus = (callback) => {
                 let data;
-                let refURL = '/users/' + userData.userName;
+                let refURL = userData.userName;
                 firebaseConnection.getDatabaseOf(refURL, (s) => {
                     if (s.exists() == true) {
                         data = s.val();
@@ -78,26 +91,33 @@ let firebaseConnection = {
             mainCallback(null);
         }
     },
-    bindDatabaseEvents: () => {
-        firebaseConnection.bindUsersEvents();
-        firebaseConnection.bindImagesEvents();
-        firebaseConnection.bindRequestsEvents();
+    bindUserDatabaseEvents: (user) => {
+        firebaseConnection.bindUsersEvents(user);
+        firebaseConnection.bindImagesEvents(user);
+        firebaseConnection.bindSentRequestsEvents(user);
+
+        // firebaseConnection.bindReceivedRequestsEvents(user);
     },
-    bindImagesEvents: () => {
-        let refValue = '/images';
+    bindImagesEvents: (user) => {
+        let refValue = user + '/image/';
         var commentsRef = firebase.database().ref(refValue);
-        firebaseConnection.bindChildEvents(commentsRef, refValue);
+        firebaseConnection.bindChildEvents(commentsRef, 'image');
     },
-    bindUsersEvents: () => {
-        let refValue = '/users';
+    bindUsersEvents: (user) => {
+        let refValue = user + '/connectedWith/';
         var commentsRef = firebase.database().ref(refValue);
-        firebaseConnection.bindChildEvents(commentsRef, refValue);
+        firebaseConnection.bindChildEvents(commentsRef, 'connectUser');
     },
-    bindRequestsEvents: () => {
-        let refValue = '/requests';
+    bindSentRequestsEvents: (user) => {
+        let refValue = user + '/request/';
         var commentsRef = firebase.database().ref(refValue);
-        firebaseConnection.bindChildEvents(commentsRef, refValue);
+        firebaseConnection.bindChildEvents(commentsRef, 'sent');
     },
+    // bindReceivedRequestsEvents: () => {
+    //     let refValue = localStorage.userName + '/request/received/';
+    //     var commentsRef = firebase.database().ref(refValue);
+    //     firebaseConnection.bindChildEvents(commentsRef, 'received');
+    // },
     bindChildEvents: (commentsRef, refValue) => {
         commentsRef.on('child_added', function (data) {
             console.log('child_added of : ', data.key);
@@ -117,7 +137,7 @@ let firebaseConnection = {
     getDatabaseOf: (url, scallback, ecallback) => {
         try {
             let firebaseDatabase = utils.firebaseApp.database();
-            firebaseDatabase.ref(url).once("value", (s) => {
+            firebaseDatabase.ref(url + '/').once("value", (s) => {
                 console.log("getActiveUsers : ", s);
                 scallback(s);
             });
