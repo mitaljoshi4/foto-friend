@@ -26,6 +26,29 @@ let firebaseConnection = {
             callback(false);
         }
     },
+    createNewUser: (data, callback) => {
+        try {
+            let getDB = () => {
+                let defaultData = {
+                    "userStatus": data.status,
+                    "connectedWith": data.connectedWith,
+                    "image": ""
+                }
+                utils.setToDatabase('/' + data.userName, defaultData)
+                utils.userStatus = data.status;
+                callback(utils.userStatus);
+            }
+            if (utils.firebaseApp) {
+                getDB();
+            } else {
+                firebaseConnection.init((isDone) => {
+                    if (isDone) getDB();
+                });
+            }
+        } catch (e) {
+            console.log("Error in update of firebase database : " + e);
+        }
+    },
     updateUserStatus: (data, callback) => {
         try {
             let getDB = () => {
@@ -39,7 +62,7 @@ let firebaseConnection = {
                         "received": {}
                     }
                 }
-                firebaseDatabase.ref(localStorage.userName).set(defaultData);
+                firebaseDatabase.ref().set(defaultData);
                 firebaseConnection.getUserStatus(data, (userStatus) => {
                     if (userStatus) {
                         utils.userStatus = userStatus;
@@ -69,7 +92,7 @@ let firebaseConnection = {
                 firebaseConnection.getDatabaseOf(refURL, (s) => {
                     if (s.exists() == true) {
                         data = s.val();
-                        callback(data.status);
+                        callback(data.userStatus);
                     } else {
                         callback(null);
                     }

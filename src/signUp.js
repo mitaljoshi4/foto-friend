@@ -17,10 +17,10 @@ let signup = {
                 status: 'online',
                 connectedWith: ''
             }
-            firebaseConnection.getUserStatus(userObj, (status) => {
-                console.log('User Status : ', status);
-                if (status == null) {
-                    firebaseConnection.updateUserStatus(userObj, (status) => {
+            firebaseConnection.getUserStatus(userObj, (sts) => {
+                console.log('User Status : ', sts);
+                if (sts === null) {
+                    firebaseConnection.createNewUser(userObj, (status) => {
                         if (status == "online") {
                             //User is added, Open Online User list to request
                             localStorage.userName = username;

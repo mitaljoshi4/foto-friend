@@ -268,7 +268,7 @@ let utils = {
                 /* code here */
                 let sendRefURL = localStorage.userName + '/image/';
                 // recRefURL = localStorage.connectedWith
-                utils.setReqStatus(sendRefURL, { image: 'data:image/png;base64,' + base64PictureData[0] });
+                utils.updateToDatabase(sendRefURL, { image: 'data:image/png;base64,' + base64PictureData[0] });
                 //TODO : send image to database
 
                 // $("#capturedImage").prop('src', 'data:image/png;base64,' + base64PictureData[0]);
@@ -322,44 +322,31 @@ let utils = {
 
         if (localStorage.isReceiver != "false") {
             let refUrl = localStorage.userName + '/request/received/';
-            let firebaseDatabase = utils.firebaseApp.database();
-            firebaseDatabase.ref(refUrl).once("value", (s) => {
-                let requestArray = s.val();
-                requestArray.status = reqStatus;
-                utils.setReqStatus(refUrl, requestArray);
-                var sentUrl = localStorage.connectedWith + '/request/sent/'
-                firebaseDatabase.ref(sentUrl).once("value", (sap) => {
-                    let reqArray = sap.val();
-                    reqArray.status = reqStatus;
-                    utils.setReqStatus(sentUrl, reqArray);
-                });
-                firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
-            });
+            let updatedData = {
+                status: reqStatus
+            }
+            utils.updateToDatabase(refUrl, updatedData);
+            var sentUrl = localStorage.connectedWith + '/request/sent/'
+            utils.updateToDatabase(sentUrl, updatedData);
+            firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
         } else {
             let refUrl = localStorage.userName + '/request/sent/';
-            let firebaseDatabase = utils.firebaseApp.database();
-            firebaseDatabase.ref(refUrl).once("value", (s) => {
-                let requestArray = s.val();
-                requestArray.status = reqStatus;
-                utils.setReqStatus(refUrl, requestArray);
-                var sentUrl = localStorage.connectedWith + '/request/received/'
-                firebaseDatabase.ref(sentUrl).once("value", (sap) => {
-                    let reqArray = sap.val();
-                    reqArray.status = reqStatus;
-                    utils.setReqStatus(sentUrl, reqArray);
-                });
-                firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
-            });
+            let updatedData = {
+                status: reqStatus
+            }
+            utils.updateToDatabase(refUrl, updatedData);
+            var sentUrl = localStorage.connectedWith + '/request/received/'
+            utils.updateToDatabase(sentUrl, updatedData);
+            firebaseConnection.bindUserDatabaseEvents(localStorage.connectedWith);
         }
 
 
     },
-    addNewToDatabase: (ref) => {
-        //TODO ref : https://firebase.google.com/docs/database/web/read-and-write
-        var newPostKey = firebase.database().ref(ref).push().key;
-        return newPostKey;
+    updateToDatabase: (refUrl, updatedData) => {
+        let firebaseDatabase = utils.firebaseApp.database();
+        firebaseDatabase.ref(refUrl).update(updatedData);
     },
-    setReqStatus: (refUrl, newData) => {
+    setToDatabase: (refUrl, newData) => {
         let firebaseDatabase = utils.firebaseApp.database();
         firebaseDatabase.ref(refUrl).set(newData);
     }
