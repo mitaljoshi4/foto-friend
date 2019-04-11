@@ -4,17 +4,9 @@ var camera = {
         $(document).on('click', "#captureButton", () => {
             try {
                 $.mobile.loading('show');
-                let updatedData;
-                if (localStorage.isReceiver == "true") {
-                    updatedData = {
-                        "sender": localStorage.connectedWith,
-                        "status": "capturing"
-                    }
-                } else {
-                    updatedData = {
-                        "receiver": localStorage.connectedWith,
-                        "status": "capturing"
-                    }
+                let updatedData = {
+                    "sender": localStorage.connectedWith,
+                    "status": "capturing"
                 }
                 utils.updateRequestStatus(updatedData);
                 setTimeout(() => {

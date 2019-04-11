@@ -31,7 +31,7 @@ let firebaseConnection = {
             let getDB = () => {
                 let defaultData = {
                     "userStatus": data.status,
-                    "connectedWith": data.connectedWith,
+                    "connectedWith": data.connectedWith || "",
                     "image": ""
                 }
                 utils.setToDatabase('/' + data.userName, defaultData)
@@ -154,7 +154,7 @@ let firebaseConnection = {
         }
     },
     bindUsersEvents: (user) => {
-        let refValue = user + '/connectedWith/';
+        let refValue = user + '/connectedWith';
         var commentsRef = firebase.database().ref(refValue);
         firebaseConnection.bindChildEvents(commentsRef, 'connectUser');
     },
@@ -164,7 +164,7 @@ let firebaseConnection = {
         firebaseConnection.bindChildEvents(commentsRef, 'sent');
     },
     bindReceivedRequestsEvents: (user) => {
-        let refValue = localStorage.userName + '/request/received/';
+        let refValue = localStorage.userName + '/request/received';
         var commentsRef = firebase.database().ref(refValue);
         firebaseConnection.bindChildEvents(commentsRef, 'received');
     },

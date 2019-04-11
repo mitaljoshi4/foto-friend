@@ -15,7 +15,7 @@ let signup = {
             let userObj = {
                 userName: username,
                 status: 'online',
-                connectedWith: ''
+                connectedWith: ""
             }
             firebaseConnection.getUserStatus(userObj, (sts) => {
                 console.log('User Status : ', sts);
@@ -24,6 +24,7 @@ let signup = {
                         if (status == "online") {
                             //User is added, Open Online User list to request
                             localStorage.userName = username;
+                            firebaseConnection.bindUserDatabaseEvents(localStorage.userName);
                             $.mobile.changePage('#activeUserListPage');
                         } else {
                             //GO to SignUp

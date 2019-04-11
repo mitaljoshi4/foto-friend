@@ -19,6 +19,7 @@ let utils = {
             if (userList.length != 0) {
                 let listData = utils.getActiveUserList(userList);
                 $("#activeUserListContainer").html(listData);
+                utils.bindSendRequestClickEvent();
                 // $("#activeUserListContainer").listview('refresh');
             } else {
                 $("#activeUserListContainer").html("<h4 class='text-center'>No active user found.</h4>");
@@ -102,7 +103,7 @@ let utils = {
                 //set received request data to receiver user 
                 let receivedObj = {
                     acceptTime: 0,
-                    sender: receiverUser,
+                    sender: localStorage.userName,
                     sentTime: 0,
                     status: "pending"
                 }
@@ -395,18 +396,24 @@ let utils = {
         if (localStorage.isReceiver != "false") {
             let refUrl = localStorage.userName + '/request/received/' + localStorage.connectedWith;
             utils.updateToDatabase(refUrl, updatedData);
+            var upData = {
+                "receiver": localStorage.userName,
+                "status": updatedData.status
+            };
             var sentUrl = localStorage.connectedWith + '/request/sent/' + localStorage.userName;
-            utils.updateToDatabase(sentUrl, updatedData);
+            utils.updateToDatabase(sentUrl, upData);
             firebaseConnection.bindImagesEvents(localStorage.connectedWith);
         } else {
+            var upData = {
+                "receiver": localStorage.connectedWith,
+                "status": updatedData.status
+            };
             let refUrl = localStorage.userName + '/request/sent/' + localStorage.connectedWith;
-            utils.updateToDatabase(refUrl, updatedData);
+            utils.updateToDatabase(refUrl, upData);
             var sentUrl = localStorage.connectedWith + '/request/received/' + localStorage.userName;
             utils.updateToDatabase(sentUrl, updatedData);
             firebaseConnection.bindImagesEvents(localStorage.connectedWith);
         }
-
-
     },
     updateToDatabase: (refUrl, updatedData) => {
         let firebaseDatabase = utils.firebaseApp.database();
