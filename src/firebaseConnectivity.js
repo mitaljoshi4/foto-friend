@@ -118,13 +118,40 @@ let firebaseConnection = {
         firebaseConnection.bindUsersEvents(user);
         firebaseConnection.bindImagesEvents(user);
         firebaseConnection.bindSentRequestsEvents(user);
-
-        // firebaseConnection.bindReceivedRequestsEvents(user);
+        firebaseConnection.bindReceivedRequestsEvents(user);
     },
     bindImagesEvents: (user) => {
         let refValue = user + '/image/';
         var commentsRef = firebase.database().ref(refValue);
-        firebaseConnection.bindChildEvents(commentsRef, 'image');
+        if (user == localStorage.userName) {
+            firebaseConnection.bindChildEvents(commentsRef, 'image');
+        } else {
+            firebaseConnection.bindConnectedUserChildEvents(commentsRef);
+        }
+    },
+    bindConnectedUserChildEvents: (commentsRef) => {
+        commentsRef.on('child_added', function (data) {
+            console.log('child_added of : ', data.key);
+            firebaseConnection.updateConnectedImage('child_added', data);
+        });
+
+        commentsRef.on('child_changed', function (data) {
+            console.log('child_changed of : ', data.key);
+            firebaseConnection.updateConnectedImage('child_changed', data);
+        });
+
+        commentsRef.on('child_removed', function (data) {
+            console.log('child_removed of : ', data.key);
+            firebaseConnection.updateConnectedImage('child_removed', data);
+        });
+    },
+    updateConnectedImage: (eventType, data) => {
+        if (data.val() != "") {
+            localStorage.otherImage = data.val();
+            if (localStorage.myImage) {
+                utils.setImageToCanvas(localStorage.myImage, localStorage.otherImage);
+            }
+        }
     },
     bindUsersEvents: (user) => {
         let refValue = user + '/connectedWith/';
@@ -132,15 +159,15 @@ let firebaseConnection = {
         firebaseConnection.bindChildEvents(commentsRef, 'connectUser');
     },
     bindSentRequestsEvents: (user) => {
-        let refValue = user + '/request/';
+        let refValue = user + '/request/sent';
         var commentsRef = firebase.database().ref(refValue);
         firebaseConnection.bindChildEvents(commentsRef, 'sent');
     },
-    // bindReceivedRequestsEvents: () => {
-    //     let refValue = localStorage.userName + '/request/received/';
-    //     var commentsRef = firebase.database().ref(refValue);
-    //     firebaseConnection.bindChildEvents(commentsRef, 'received');
-    // },
+    bindReceivedRequestsEvents: (user) => {
+        let refValue = localStorage.userName + '/request/received/';
+        var commentsRef = firebase.database().ref(refValue);
+        firebaseConnection.bindChildEvents(commentsRef, 'received');
+    },
     bindChildEvents: (commentsRef, refValue) => {
         commentsRef.on('child_added', function (data) {
             console.log('child_added of : ', data.key);
