@@ -1,6 +1,7 @@
 import { utils } from "./util";
 var activeUsers = {
     pageBeforeShow: () => {
+        localStorage.isReceiver = false;
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var cTab = e.target.id;
             if (cTab == 'requests-tab') {

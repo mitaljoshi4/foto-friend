@@ -24,6 +24,7 @@ let utils = {
                 $("#activeUserListContainer").html("<h4 class='text-center'>No active user found.</h4>");
                 // $("#activeUserListContainer").listview('refresh');
             }
+            $.mobile.loading('hide');
         });
     },
     setRequestsList: () => {
@@ -69,7 +70,10 @@ let utils = {
         $.each(acceptBtnList, (i, val) => {
             $(val).click(function () {
                 let reqdata = JSON.parse(val.dataset.detail);
+                console.log("Request Data : ", reqdata);
                 localStorage.connectedWith = reqdata.sender;
+                utils.updateToDatabase('/' + localStorage.userName, { connectedWith: reqdata.sender });
+                utils.updateToDatabase('/' + reqdata.sender, { connectedWith: localStorage.userName });
                 localStorage.isReceiver = true;
                 utils.updateRequestStatus('accepted');
                 utils.startCamera();
@@ -150,28 +154,34 @@ let utils = {
             case 'connectUser':
                 {
                     //TODO : Update active user list
-
+                    let path = data.ref.getParent().path.toString();
+                    let isMyData = path.includes('/' + localStorage.userName + '/');
+                    if (isMyData) {
+                        localStorage.connectedWith = data.val();
+                        firebaseConnection.bindUserDatabaseEvents(data.val());
+                    }
                     console.log('Users Update : ', eventType, data);
-                    firebaseConnection.bindUserDatabaseEvents(data.val());
                     break;
                 }
             case 'sent':
                 {
                     // TODO: Update requests list
-                    if (data.val().status == 'accepted') {
-                        if (localStorage.isReceiver == "true" && data.val().sender == localStorage.connectedWith) {
-                            //TODO: Update status and start camera
-                            utils.startCamera();
-                        } else if (localStorage.isReceiver == "false" && data.val().receiver == localStorage.connectedWith) {
-                            utils.startCamera();
-                        } else {
+                    if (eventType == 'child_changed') {
+                        if (data.val().status == 'accepted') {
+                            if (localStorage.isReceiver == "true" && data.val().sender == localStorage.connectedWith) {
+                                //TODO: Update status and start camera
+                                utils.startCamera();
+                            } else if (localStorage.isReceiver == "false" && data.val().receiver == localStorage.connectedWith) {
+                                utils.startCamera();
+                            } else {
+                            }
+                        } else if (data.val().status == 'capturing') {
+                            setTimeout(() => {
+                                utils.captureImage();
+                            }, 2000)
                         }
-                    } else if (data.val().status == 'capturing') {
-                        setTimeout(() => {
-                            utils.captureImage();
-                        }, 2000)
+                        console.log('Requests Update : ', eventType, data);
                     }
-                    console.log('Requests Update : ', eventType, data);
                     break;
                 }
             default:
@@ -257,6 +267,7 @@ let utils = {
                 disableExifHeaderStripping: false
             };
             CameraPreview.startCamera(options);
+            $("#captureButton").show();
         } catch (e) {
             console.log("Error in camera plugin.....");
         }
@@ -280,17 +291,32 @@ let utils = {
     },
     stopCamera: () => {
         try {
-            localStorage.isReceiver = false;
+            $("#captureButton").hide();
             CameraPreview.stopCamera();
         } catch (e) {
             console.log("Error in capture image.....");
         }
     },
     setImageToCanvas: (img1, img2) => {
+        var tempImg;
+        if (localStorage.isReceiver == "true") {
+            tempImg = img1;
+            img1 = img2;
+            img2 = tempImg;
+        }
         var canvas = document.getElementById("canvas");
         var ctx = canvas.getContext("2d");
+        // Store the current transformation matrix
+        ctx.save();
+
+        // Use the identity matrix while clearing the canvas
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Restore the transform
+        ctx.restore();
         //First canvas data
+
         var img1 = loadImage(img1, main);
         //Second canvas data
         var img2 = loadImage(img2, main);
@@ -303,8 +329,6 @@ let utils = {
             if (imagesLoaded == 2) {
                 // composite now
                 ctx.drawImage(img1, 0, 0, 100, 100);
-
-                ctx.globalAlpha = 0.5;
                 ctx.drawImage(img2, 100, 0, 100, 100);
             }
         }
