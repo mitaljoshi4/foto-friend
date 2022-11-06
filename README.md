@@ -10,7 +10,7 @@ A user will be able to take pictures from 2 phone's simultaneously it could be a
 When the count down starts, save the time stamp of current UTC time with adding 3 seconds into the db. Other users will pick that up as they both are joined in 1 session/dbObject so that user's device will take image on the exact time provided from the server. Once taking the image is done then comes the storing part. store the image in firebase storage and save the ID in the database then using those 2 (or more IDs) and bring/download that image and combine them using HTML canvas and show it to the users who are in the session. they can save and share that image if they like otherwise discard it and start the process again. 
 
 
-## Todos
+## Run Project
 
 ✅ Create git repo 
 
